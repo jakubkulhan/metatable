@@ -268,14 +268,16 @@ final class metatable
         // strings GC
         if (($this->flags & self::STRINGS_GC) === self::STRINGS_GC) {
             fseek($this->tmp, 0, SEEK_SET);
+            fseek($this->handle, $this->structure['frames'][$data]['offset'], SEEK_SET);
             $new_offset = 0;
+            
             for ($i = 0, $N = $this->structure['frames'][$data]['used'] /
-                self::SIZEOF_DATA_RECORD; $i < $N; $i++)
+                self::SIZEOF_DATA_RECORD, $unpack = self::DATA_TYPE_UNPACK . '/' .
+                self::DATA_VALUE_UNPACK; $i < $N; $i++)
             {
-                $read = unpack(self::DATA_TYPE_UNPACK . '/' . self::DATA_VALUE_UNPACK,
-                    $this->frame_read(self::FRAME_DATA, $i * self::SIZEOF_DATA_RECORD +
-                        self::SIZEOF_DATA_ROW + self::SIZEOF_DATA_COL,
-                        self::SIZEOF_DATA_TYPE + self::SIZEOF_DATA_VALUE));
+                $read = unpack($unpack, substr(fread($this->handle,
+                    self::SIZEOF_DATA_RECORD), self::SIZEOF_DATA_ROW +
+                    self::SIZEOF_DATA_COL));
 
                 list($type, $offset, $size) = $this->data_get_type($read['type'],
                     $read['value']);
@@ -414,10 +416,12 @@ final class metatable
         }
 
         $ret = array();
+        fseek($this->handle, $this->structure['frames'][$this->structure
+            ['frames_indexes'][self::FRAME_DATA]]['offset'] + $lower *
+            self::SIZEOF_DATA_RECORD, SEEK_SET); // single seek
 
         for ($i = $lower; $i <= $upper; $i++) {
-            $data = $this->frame_read(self::FRAME_DATA, $i *
-                self::SIZEOF_DATA_RECORD, self::SIZEOF_DATA_RECORD);
+            $data = fread($this->handle, self::SIZEOF_DATA_RECORD);
             if (strlen($data) < self::SIZEOF_DATA_RECORD) {
                 return array();
             }
@@ -1049,12 +1053,14 @@ final class metatable
         }
 
         // get indexes
+        fseek($that->handle, $that->structure['frames'][$that->structure
+                ['frames_indexes'][self::FRAME_INDEXES]]['offset'], SEEK_SET);
+
         for ($i = 0, $N = $that->structure['frames'][$that->structure
             ['frames_indexes'][self::FRAME_INDEXES]]['used'] / self::SIZEOF_INDEX_RECORD;
             $i < $N; $i++)
         {
-            $data = $that->frame_read(self::FRAME_INDEXES, $i *
-                self::SIZEOF_INDEX_RECORD, self::SIZEOF_INDEX_RECORD);
+            $data = fread($that->handle, self::SIZEOF_INDEX_RECORD);
             if (strlen($data) < self::SIZEOF_INDEX_RECORD) {
                 continue;
             }
