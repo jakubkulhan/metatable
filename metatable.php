@@ -283,9 +283,18 @@ final class metatable
                     $read['value']);
 
                 if ($type === self::STRING) {
-                    fseek($this->handle, $this->structure['frames'][$strings]
-                        ['offset'] + $offset, SEEK_SET);
-                    stream_copy_to_stream($this->handle, $this->tmp, $size);
+                    if ($this->locking && $offset < $this->structure['frames']
+                        [$strings]['used_at_start'])
+                    {
+                        fseek($this->locking, $this->structure['frames'][$strings]
+                            ['offset_at_start'] + $offset, SEEK_SET);
+                        stream_copy_to_stream($this->locking, $this->tmp, $size);
+
+                    } else {
+                        fseek($this->handle, $this->structure['frames'][$strings]
+                            ['offset'] + $offset, SEEK_SET);
+                        stream_copy_to_stream($this->handle, $this->tmp, $size);
+                    }
 
                     $this->frame_write(self::FRAME_DATA, $i * self::SIZEOF_DATA_RECORD
                         + self::SIZEOF_DATA_ROW + self::SIZEOF_DATA_COL, $this->data_type(
@@ -553,7 +562,19 @@ final class metatable
         $val = NULL;
 
         if (($type & (1 << 31)) !== 0) {
-            $val = $this->frame_read(self::FRAME_STRINGS, $value, $type & (~(1 << 31)));
+            $offset = $value;
+            $size = $type & (~(1 << 31));
+            if ($this->locking && $offset < $this->structure['frames'][$this->
+                structure['frames_indexes'][self::FRAME_STRINGS]]['used_at_start'])
+            {
+                fseek($this->locking, $this->structure['frames'][$this->structure
+                        ['frames_indexes'][self::FRAME_STRINGS]]['offset_at_start'] +
+                    $offset, SEEK_SET);
+                $val = fread($this->locking, $size);
+
+            } else {
+                $val = $this->frame_read(self::FRAME_STRINGS, $offset, $size);
+            }
 
         } else if (($type & (1 << 30)) !== 0) { // integer
             $val = intval($value);
@@ -1019,18 +1040,28 @@ final class metatable
 
             // copy data to temporary
             if ($locking) {
-                foreach ($structure['frames'] as $frame) {
-                    if (!(fseek($locking, $frame['offset'], SEEK_SET) !== -1 &&
-                        fseek($handle, $frame['offset'], SEEK_SET) !== -1 &&
-                        stream_copy_to_stream($locking, $handle, $frame['used'])
-                            === $frame['used']))
+                foreach ($structure['frames'] as $i => $frame) {
+                    if (($flags & self::STRINGS_GC) === self::STRINGS_GC &&
+                        $frame['name'] === self::FRAME_STRINGS)
                     {
-                        fclose($locking);
-                        fclose($handle);
-                        unlink($handle_filename);
-                        fclose($tmp);
-                        unlink($tmp_filename);
-                        return FALSE;
+                        $structure['frames'][$i]['used_at_start'] =
+                            $structure['frames'][$i]['used'];
+                        $structure['frames'][$i]['offset_at_start'] =
+                            $structure['frames'][$i]['offset'];
+
+                    } else {
+                        if (!(fseek($locking, $frame['offset'], SEEK_SET) !== -1 &&
+                            fseek($handle, $frame['offset'], SEEK_SET) !== -1 &&
+                            stream_copy_to_stream($locking, $handle, $frame['used'])
+                                === $frame['used']))
+                        {
+                            fclose($locking);
+                            fclose($handle);
+                            unlink($handle_filename);
+                            fclose($tmp);
+                            unlink($tmp_filename);
+                            return FALSE;
+                        }
                     }
                 }
             }
