@@ -436,6 +436,13 @@ final class metatable
                 if (!($col !== '*' && !preg_match($col, $data['col']))) {
                     $ret[$data['row']][$data['col']] = $this->data_get_value(
                         $data['type'], $data['value']);
+
+                    if (is_string($ret[$data['row']][$data['col']])) {
+                        fseek($this->handle, $this->structure['frames'][
+                            $this->structure['frames_indexes']
+                            [self::FRAME_DATA]]['offset'] + ($i + 1) *
+                            self::SIZEOF_DATA_RECORD, SEEK_SET);
+                    }
                 }
             }
         }
