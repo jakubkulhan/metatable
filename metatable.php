@@ -1,8 +1,31 @@
 <?php
 /**
+ * It is metatable or something like that ;-)
+ */
+interface metatableable
+{
+    /**
+     * Get value(s)
+     * @param string
+     * @param string
+     * @return array
+     */
+    public function get($row, $col);
+
+    /**
+     * Set value
+     * @param string
+     * @param string
+     * @param mixed
+     * @param bool
+     */
+    public function set($row, $col, $value);
+}
+
+/**
  * Simple way how to store and retrieve data
  */
-final class metatable
+final class metatable implements metatableable
 {
     /**
      * Magic string indcating it's metatable file
@@ -168,6 +191,11 @@ final class metatable
      * Minimal size of one frame
      */
     const FRAME_MINIMAL_SIZE = 2048; // 2KiB
+
+    /**
+     * Number of tries to lock file
+     */
+    const LOCK_TRIES = 10;
 
     /**
      * @var int Flags
@@ -338,17 +366,20 @@ final class metatable
         self::structure_write($this->handle, $this->structure);
 
         // rename
-        if ($this->locking) {
-            fclose($this->locking);
-            $this->locking = NULL;
+        if (!fflush($this->handle)) {
+            return FALSE;
         }
-        fflush($this->handle);
         fclose($this->handle);
         $this->handle = NULL;
 
         $ret = @rename($this->handle_filename, $this->filename);
         if ($ret) {
             $this->handle_filename = NULL;
+        }
+
+        if ($this->locking) {
+            fclose($this->locking);
+            $this->locking = NULL;
         }
 
         return $ret;
@@ -979,6 +1010,8 @@ final class metatable
         }
 
         // initialize
+        $tries_left = self::LOCK_TRIES;
+        $inode = @fileinode($filename);
         $handle = @fopen($filename, 'rb' .
             (($flags & self::READWRITE) === self::READWRITE ? '+' : ''));
         $locking = NULL;
@@ -989,11 +1022,37 @@ final class metatable
 
         // open metatable file
         if ($handle) { // file exists
-            if (!flock($handle, (($flags & self::READONLY) === self::READONLY) ?
-                    LOCK_SH : LOCK_EX))
-            {
+            while (true) {
+                // try to lock
+                if (!flock($handle, (($flags & self::READONLY) === self::READONLY) ?
+                        LOCK_SH : LOCK_EX))
+                {
+                    fclose($handle);
+                    return FALSE;
+                }
+
+                // check inode
+                clearstatcache();
+                $current_inode = fileinode($filename);
+                if ($current_inode === $inode) {
+                    break;
+                }
+
+                if ($tries_left <= 0) {
+                    fclose($handle);
+                    return FALSE;
+                }
+
+                // try to open again
                 fclose($handle);
-                return FALSE;
+                $tries_left--;
+                $inode = $current_inode;
+                $handle = @fopen($filename, 'rb' .
+                    (($flags & self::READWRITE) === self::READWRITE ? '+' : ''));
+
+                if (!$handle) {
+                    return FALSE;
+                }
             }
 
         } else { // file does not exist
