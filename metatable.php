@@ -449,10 +449,10 @@ final class metatable implements metatableable
 
         // get data itself
         if ($row !== '*') {
-            $row = '~' . str_replace('\*', '.+', preg_quote($row, '~')) . '~';
+            $row = '~^' . str_replace('\*', '.+', preg_quote($row, '~')) . '$~';
         }
         if ($col !== '*') {
-            $col = '~' . str_replace('\*', '.+', preg_quote($col, '~')) . '~';
+            $col = '~^' . str_replace('\*', '.+', preg_quote($col, '~')) . '$~';
         }
 
         $ret = array();
