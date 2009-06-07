@@ -604,7 +604,11 @@ final class metatable implements metatableable
                 $val = fread($this->locking, $size);
 
             } else {
-                $val = $this->frame_read(self::FRAME_STRINGS, $offset, $size);
+                if ($size > 0) {
+                    $val = $this->frame_read(self::FRAME_STRINGS, $offset, $size);
+                } else {
+                    $val = '';
+                }
             }
 
         } else if (($type & (1 << 30)) !== 0) { // integer
