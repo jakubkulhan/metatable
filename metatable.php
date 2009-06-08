@@ -489,11 +489,11 @@ final class metatable implements metatableable
             $data = unpack(self::DATA_RECORD_UNPACK, $data);
 
             if (!($row !== '*' && !preg_match($row, $data['row']))) {
-                if (!isset($ret[$data['row']])) {
-                    $ret[$data['row']] = array();
-                }
-
                 if (!($col !== '*' && !preg_match($col, $data['col']))) {
+                    if (!isset($ret[$data['row']])) {
+                        $ret[$data['row']] = array();
+                    }
+
                     $ret[$data['row']][$data['col']] = $this->data_get_value(
                         $data['type'], $data['value']);
 
