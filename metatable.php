@@ -28,6 +28,26 @@ interface metatableable
 final class metatable implements metatableable
 {
     /**
+     * Magic integer for string type
+     */
+    const MAGIC_TYPE_STRING = -2147483648;
+
+    /**
+     * Magic integer for integer type
+     */
+    const MAGIC_TYPE_INTEGER = 1073741824;
+
+    /**
+     * Magic integer for true value
+     */
+    const MAGIC_TYPE_TRUE = 536870912;
+
+    /**
+     * Magic integer for false value
+     */
+    const MAGIC_TYPE_FALSE = 268435456;
+
+    /**
      * Magic string indcating it's metatable file
      */
     const MAGIC_STRING = 'metatable';
@@ -592,16 +612,20 @@ final class metatable implements metatableable
     {
         $val = NULL;
 
-        if (($type & (1 << 31)) !== 0) {
+        if (($type & (self::MAGIC_TYPE_STRING)) !== 0) {
             $offset = $value;
-            $size = $type & (~(1 << 31));
+            $size = $type & (~(self::MAGIC_TYPE_STRING));
             if ($this->locking && $offset < $this->structure['frames'][$this->
                 structure['frames_indexes'][self::FRAME_STRINGS]]['used_at_start'])
             {
                 fseek($this->locking, $this->structure['frames'][$this->structure
                         ['frames_indexes'][self::FRAME_STRINGS]]['offset_at_start'] +
                     $offset, SEEK_SET);
-                $val = fread($this->locking, $size);
+                if ($size > 0) {
+                    $val = fread($this->locking, $size);
+                } else {
+                    $val = '';
+                }
 
             } else {
                 if ($size > 0) {
@@ -611,13 +635,13 @@ final class metatable implements metatableable
                 }
             }
 
-        } else if (($type & (1 << 30)) !== 0) { // integer
+        } else if (($type & (self::MAGIC_TYPE_INTEGER)) !== 0) { // integer
             $val = intval($value);
 
-        } else if (($type & (1 << 29)) !== 0) { // true
+        } else if (($type & (self::MAGIC_TYPE_TRUE)) !== 0) { // true
             $val = true;
 
-        } else if (($type & (1 << 28)) !== 0) { // false
+        } else if (($type & (self::MAGIC_TYPE_FALSE)) !== 0) { // false
             $val = false;
         }
 
@@ -634,16 +658,16 @@ final class metatable implements metatableable
     {
         $ret = array(NULL, NULL, NULL);
 
-        if (($type & (1 << 31)) !== 0) {
-            $ret = array(self::STRING, $value, $type & (~(1 << 31)));
+        if (($type & (self::MAGIC_TYPE_STRING)) !== 0) {
+            $ret = array(self::STRING, $value, $type & (~(self::MAGIC_TYPE_STRING)));
 
-        } else if (($type & (1 << 30)) !== 0) { // integer
+        } else if (($type & (self::MAGIC_TYPE_INTEGER)) !== 0) { // integer
             $ret = array(self::INTEGER, $value, NULL);
 
-        } else if (($type & (1 << 29)) !== 0) { // true
+        } else if (($type & (self::MAGIC_TYPE_TRUE)) !== 0) { // true
             $ret = array(self::BOOLEAN, TRUE, NULL);
 
-        } else if (($type & (1 << 28)) !== 0) { // false
+        } else if (($type & (self::MAGIC_TYPE_FALSE)) !== 0) { // false
             $ret = array(self::BOOLEAN, FALSE, NULL);
         }
 
@@ -677,16 +701,16 @@ final class metatable implements metatableable
                 $this->structure['frames'][$this->structure['frames_indexes']
                     [self::FRAME_STRINGS]]['used'] += $length;
 
-                $type = 1 << 31 | $length;
+                $type = self::MAGIC_TYPE_STRING | $length;
                 $value = $offset;
             break;
 
             case 'integer':
-                $type = 1 << 30;
+                $type = self::MAGIC_TYPE_INTEGER;
             break;
 
             case 'boolean':
-                $type = 1 << ($value ? 29 : 28);
+                $type = ($value ? self::MAGIC_TYPE_TRUE : self::MAGIC_TYPE_FALSE);
                 $value = 0;
             break;
         }
@@ -705,11 +729,11 @@ final class metatable implements metatableable
     {
         switch ($type) {
             case self::STRING:
-                return pack('NN', 1 << 31 | $size, $offset);
+                return pack('NN', self::MAGIC_TYPE_STRING | $size, $offset);
             case self::INTEGER:
-                return pack('NN', 1 << 30, $offset);
+                return pack('NN', self::MAGIC_TYPE_INTEGER, $offset);
             case self::BOOLEAN:
-                return pack('NN', 1 << ($offset ? 29 : 28), 0);
+                return pack('NN', ($offset ? self::MAGIC_TYPE_TRUE : self::MAGIC_TYPE_FALSE), 0);
         }
 
         return pack('NN', 0, 0);
