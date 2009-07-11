@@ -1205,6 +1205,10 @@ final class metatable implements metatableable
      */
     private static function tmp()
     {
+        if (!is_string(sys_get_temp_dir())) {
+            return array(NULL, NULL);
+        }
+
         $filename = tempnam(sys_get_temp_dir(), self::TEMPORARY_PREFIX);
         if (!$filename) {
             return array(NULL, NULL);
@@ -1332,5 +1336,41 @@ final class metatable implements metatableable
 
         // write into file
         return fwrite($handle, $structure) === strlen($structure);
+    }
+}
+
+/**
+ * sys_get_temp_dir() for PHP < 5.2.1
+ */
+if (!function_exists('sys_get_temp_dir')) {
+    function sys_get_temp_dir()
+    {
+        static $temp_dir = NULL; // precomputed temporary directory
+
+        if ($temp_dir === NULL) {
+            // try some of environment variables
+            if (!empty($_ENV['TMP'])) {
+                return $temp_dir = realpath($_ENV['TMP']);
+            }
+
+            if (!empty($_ENV['TMPDIR'])) {
+                return $temp_dir = realpath($_ENV['TMPDIR']);
+            }
+
+            if (!empty($_ENV['TEMP'])) {
+                return $temp_dir = realpath($_ENV['TEMP']);
+            }
+
+            // try tempnam()
+            $tempnam = tempnam(uniqid(metatable::MAGIC_STRING, TRUE), '');
+            if (file_exists($tempnam)) {
+                unlink($tempnam);
+                return $temp_dir = realpath(dirname($tempnam));
+            }
+
+            return $temp_dir = FALSE;
+        }
+
+        return $temp_dir;
     }
 }
