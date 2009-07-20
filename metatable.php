@@ -394,6 +394,13 @@ final class metatable implements metatableable
         fclose($this->handle);
         $this->handle = NULL;
 
+        // WIN rename() workaround - unfotunately breaks atomicity :-(
+        if (substr(PHP_OS, 0, 3) === 'WIN' && file_exists($this->filename)) {
+            fclose($this->locking);
+            $this->locking = NULL;
+            @unlink($this->filename);
+        }
+
         $ret = @rename($this->handle_filename, $this->filename);
         if ($ret) {
             $this->handle_filename = NULL;
