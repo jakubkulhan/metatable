@@ -306,7 +306,9 @@ final class metatable implements metatableable
     public function close()
     {
         if (($this->flags & self::READONLY) === self::READONLY) {
-            return FALSE;
+            fclose($this->handle);
+            $this->handle = NULL;
+            return TRUE;
         }
 
         $data = $this->structure['frames_indexes'][self::FRAME_DATA];
