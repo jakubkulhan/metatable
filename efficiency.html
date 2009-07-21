@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>metatable</title>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <div class="row" id="header">
+            <h1 class="column grid-9"><a href="/metatable/">metatable<span></span></a></h1>
+            <div class="column grid-3" id="menu">
+                <ul class="row">
+                    <li class="column grid-1"><a href="api.html">api</a></li>
+                    <li class="column grid-1"><a href="efficiency.html">efficiency</a></li>
+                    <li class="column grid-1"><a href="format.html">format</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row" id="content">
+            <div class="column grid-12">
+                <h2>Efficiency</h2>
+                <p>Like with in any other storage engine, there are operations that
+                are faster than others and ops that are slower than others. This page
+                should summarize them.</p>
+
+                <h3>Slow</h3>
+                <ul>
+                    <li>
+                    Prepending values. If you have in table pair <code>("z",
+                        "z")</code> and then you add pair <code>("a", "a")</code>,
+                    <code>("z", "z")</code> has to be moved to free place for
+                    <code>("a", "a")</code>.
+                    </li>
+
+                    <li>
+                    Using <code>get('*', 'concrete_col')</code> or
+                    <code>get('*row', $col)</code>.
+                    </li>
+                </ul>
+
+                <h3>Fast</h3>
+                <ul>
+                    <li>
+                    Appending values. If you have in table pair <code>("a",
+                        "a")</code> and then add pair <code>("z", "z")</code>, it is
+                    OK, because <code>("a", "a")</code> does not have to move.
+                    </li>
+
+                    <li>
+                    Using 
+                        <code>get('concrete_row', 'concrete_col)</code>,
+                        <code>get('concrete_row', '*')</code> or
+                        <code>get('row*', $col)</code>.
+                    </li>
+                </ul>
+
+            </div>
+        </div>
+        <div class="row" id="footer">
+            <div class="column grid-12">
+                Jakub Kulhan &lt;<a href="mailto:jakub.kulhan@gmail.com">jakub.kulhan@gmail.com</a>&gt;
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>metatable</title>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <div class="row" id="header">
+            <h1 class="column grid-9"><a href="/metatable/">metatable<span></span></a></h1>
+            <div class="column grid-3" id="menu">
+                <ul class="row">
+                    <li class="column grid-1"><a href="api.html">api</a></li>
+                    <li class="column grid-1"><a href="efficiency.html">efficiency</a></li>
+                    <li class="column grid-1"><a href="format.html">format</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row" id="content">
+            <div class="column grid-12">
+                <h2>File format</h2>
+                <p><em>metatable</em> file is composed from frames and structure of frames written at the end of file. Frames are named, name of frame consists from 4 bytes (there is possibility to have at most 2^32 frames if ever needed). Data itself are stored as sorted set of fixed-size records in <code>data</code> frame. Values of type <code>string</code> are stored in another frame called <code>strs</code>. The last basic frame is <code>indx</code> where „indexes“ are stored.</p>
+                <p>All integers are stored in big-endian format.</p>
+                <h3>Structure of frames (end of file)</h3>
+                <p>Zero or more frame triples <code>(name : string4, size : integer, used : integer)</code> followed by count of frames <code>frame_count : integer</code>. Then version of <em>metatable</em> format <code>format_version : integer</code> and at the end of string <code>"metatable"</code>:</p>
+                <pre><code>(name : string4, size : integer, used : integer)*
+frame_count : integer
+format_version : integer
+"metatable"</code></pre>
+                <h3><code>data</code> frame</h3>
+                <p>Fixed-size records, each record 256 bytes long:</p>
+                <ul>
+                <li><code>row</code> (124 bytes) – NUL right padded string; row name</li>
+                <li><code>col</code> (124 bytes) – NUL right padded string; col name</li>
+                <li><code>type</code> (4 bytes) – integer:
+                <ul>
+                <li><code>1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code> – string, other bits are string size (string can be at most 2^31 bytes long); offset in <code>strs</code> table is in <code>value</code> field</li>
+                <li><code>01000000000000000000000000000000</code> – integer; value in <code>value</code> field</li>
+                <li><code>00100000000000000000000000000000</code> – true; <code>value</code> field is 0</li>
+                <li><code>00010000000000000000000000000000</code> – false; <code>value</code> field is 0</li>
+                </ul>
+                </li>
+                <li><code>value</code> (4 bytes) – depends on <code>type</code></li>
+                </ul>
+                <p>Records are stored in ascending order by row and col.</p>
+                <h3><code>strs</code> frame</h3>
+                <p>Raw value of strings stacked up one after another. Have to be referenced from <code>data</code> records.</p>
+                <h3><code>indx</code> frame</h3>
+                <p>Fixed-size records, each record 128 bytes long:</p>
+                <ul>
+                <li><code>index</code> (120 bytes) – NUL right padded string; start of row name</li>
+                <li><code>lower</code> (4 bytes) – integer; lower bound position of row (<code>offset_in_data_frame = lower * 256</code>)</li>
+                <li><code>upper</code> (4 bytes) – integer; upper bound position of row (<code>end_in_data_frame = upper * 256</code>)</li>
+                </ul>
+            </div>
+        </div>
+        <div class="row" id="footer">
+            <div class="column grid-12">
+                Jakub Kulhan &lt;<a href="mailto:jakub.kulhan@gmail.com">jakub.kulhan@gmail.com</a>&gt;
+            </div>
+        </div>
+    </body>
+</html>
+

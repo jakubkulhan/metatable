@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>metatable</title>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <div class="row" id="header">
+            <h1 class="column grid-9"><a href="/metatable/">metatable<span></span></a></h1>
+            <div class="column grid-3" id="menu">
+                <ul class="row">
+                    <li class="column grid-1"><a href="api.html">api</a></li>
+                    <li class="column grid-1"><a href="efficiency.html">efficiency</a></li>
+                    <li class="column grid-1"><a href="format.html">format</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row" id="content">
+            <div class="column grid-12">
+                <h2>What is <em>metatable</em>?</h2>
+                <p><em>metatable</em> aims to provide simple interface to store and retrieve data. It is written entirely in PHP and uses only basic PHP functions, so no extensions are needed. But still <em>metatable</em> should be fast enough to be used as storage backend in some sort of applications. Data are stored in binary file in <em>metatable</em>'s own format.</p>
+                <p>It is big hashmap, which associates <code>(row : string, column : string)</code> pair to value. Currently supported value types are: <code>string</code>, <code>integer</code> (32bit) and <code>boolean</code>. <code>string</code> is uninterpreted, so other types may be stored in their binary form as <code>string</code>. Maximal lengths of <code>row</code> and <code>col</code> are 124 bytes.</p>
+                <h2>Basic usage</h2>
+                <p>To open up <em>metatable</em> file use <code>metatable::open()</code>:</p>
+                <pre><code>require_once 'metatable.php';
+
+$table = metatable::open('foo');</code></pre>
+                <p>Either <code>FALSE</code> or newly created instance of <code>metatable</code> class is returned. <code>metatable</code> object has only a few public methods – <code>get()</code>, <code>set()</code>, <code>index()</code>, <code>unindex()</code> and <code>close()</code>. <code>get()</code> and <code>set()</code> are used to retrieve and store values. When passing <code>NULL</code> to <code>set()</code> as value, record is deleted:</p>
+                <pre><code>$table-&gt;set('foo', 'bar', 5);
+
+$table-&gt;get('foo', 'bar');
+// =&gt; array('foo' =&gt; array('bar' =&gt; 5))
+
+$table-&gt;set('foo', 'bar', NULL);
+
+$table-&gt;get('foo', 'bar');
+// =&gt; array()</code></pre>
+                <p><code>index()</code> and <code>unindex()</code> creates and drops indexes. Index is precomputed saved value, where data are stored in file. Indexes can be created only if there are some values to index.</p>
+                <p>The last method <code>close()</code> saves structure informations and closes <em>metatable</em> file. <em>metatable</em> is constructed in way that each instance is „transaction“ – all operations are performed or none of them – data integrity is assured.</p>
+
+                <h2>Advanced usage</h2>
+                <h3><code>metatable::open()</code> flags</h3>
+                <p><code>metatable::open()</code> takes two arguments – <code>$filename</code> and <code>$flags</code>, where <code>$flags</code> is integer – <code>or</code>-ed list of flags defined in <code>metatable</code> class constants. Possible flags are:</p>
+                <ul>
+                <li><code>READONLY</code> – <em>metatable</em> is opened readonly, cannot do <code>set()</code> and is not saved on closing (defautly turned off)</li>
+                <li><code>READWRITE</code> – all operations are possible (defaulty on)</li>
+                <li><code>STRINGS_GC</code> – strings are garbage collected (defaultly on)</li>
+                <li><code>AUTOCLOSE</code> – automatically saved on instance destruction (defaultly off)</li>
+                </ul>
+                <p>The most common option is to open <em>metatable</em> readonly, which increases efficiency, when you do not need to write to <em>metatable</em>:</p>
+                <pre><code>$readonly = metatable::open('foo', metatable::READONLY);</code></pre>
+                <p>Do not ever open more <em>metatable</em>s, when one of them would be opened in <code>READWRITE</code> mode – this will cause race condition, each <em>metatable</em> will wait for the other one to aquire file lock.</p>
+                <h2>Support</h2>
+                <p><em>metatable</em> should definitely work perfectly with PHP 5.2.0 or higher on any UNIX – this cover the most servers you can encounter. Lower versions of PHP 5 are probably without problems, too – please run tests and report if something does not work. With Windows is the problem that they does not give any support for atomic file handling. It is fixed with workaround, so <em>metatable</em> can be used without guaranted atomicity, but it is not as reliable as if running on any UNIX. <em>metatable</em> should be used on Windows only for development purposes.</p>
+            </div>
+        </div>
+        <div class="row" id="footer">
+            <div class="column grid-12">
+                Jakub Kulhan &lt;<a href="mailto:jakub.kulhan@gmail.com">jakub.kulhan@gmail.com</a>&gt;
+            </div>
+        </div>
+    </body>
+</html>

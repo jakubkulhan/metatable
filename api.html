@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>metatable</title>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <div class="row" id="header">
+            <h1 class="column grid-9"><a href="/metatable/">metatable<span></span></a></h1>
+            <div class="column grid-3" id="menu">
+                <ul class="row">
+                    <li class="column grid-1"><a href="api.html">api</a></li>
+                    <li class="column grid-1"><a href="efficiency.html">efficiency</a></li>
+                    <li class="column grid-1"><a href="format.html">format</a></li>
+                </ul>
+            </div>
+        </div>        </div>
+        <div class="row" id="content">
+            <div class="column grid-12">
+                <h2>API</h2>
+                    <h3>Constants</h3>
+                        <h4 id="const-readonly"><code>READONLY</code></h4>
+                        <p>Passed to <a href="#static-open"><code>open()</code></a> to open
+                        table readonly. Only <a
+                            href="#method-get"><code>get()</code></a> is allowed.</p>
+                        <pre><code>$table = metatable::open('foo', metatable::READONLY);</code></pre>
+
+                        <h4 id="const-readwrite"><code>READWRITE</code></h4>
+                        <p>Passed to <a href="#static-open"><code>open()</code></a>
+                        to open table in readwrite mode. All operations can be
+                        peformed.</p>
+                        <pre><code>$table = metatable::open('foo', metatable::READWRITE);</code></pre>
+
+                        <h4 id="const-strings-gc"><code>STRINGS_GC</code></h4>
+                        <p>Passed to <a href="#static-open"><code>open()</code></a>
+                        to perform strings garbage collection, when table is <a
+                            href="#method-close"><code>close()</code></a>ed.</p>
+                        <p>Garbage collection can very slow down closing process.
+                        It is turned on by default, but it is wise to disable it and
+                        garbage collect strings only, for example, each 30 opens,
+                        each 1 day etc.</p>
+                        <pre><code>$table = metatable::open('foo', metatable::STRINGS_GC);</code></pre>
+
+                        <h4 id="const-autoclose"><code>AUTOCLOSE</code></h4>
+                        <p>Passed to <a
+                            href="#static-open"><code>open()</code></a>.</p>
+                        <p>Table is automatically closed (if opened in <a
+                            href="#const-readwrite">readwrite mode</a>, data are
+                        saved).</p>
+                        <p>Discouraged to use.</p>
+                        <pre><code>$table = metatable::open('foo', metatable::AUTOCLOSE);</code></pre>
+
+                    <h3>Static methods</h3>
+                        <h4 id="static-open"><code>metatable open(string $filename, int
+                                $flags)</code></h4>
+                        <ul class="params">
+                            <li>
+                                <code>$filename</code>: 
+                                filename of
+                                <em>metatable</em>. If does not exist and
+                                <em>metatatable</em> opened in <a
+                                    href="#const-readwrite">readwrite mode</a>, file is
+                                created on <a
+                                    href="#method-close"><code>close()</code></a>ing.
+                            </li>
+                            <li>
+                                <code>$flags</code>: <code>or</code>-ed combination of flag constants. For example, when I want
+                                <em>metatable</em> opened in <a
+                                    href="#const-readwrite">readwrite mode</a>, to have
+                                <a href="#const-strings-gc">strings garbage collected</a>
+                                and <a href="#const-autoclose">autoclosing instance</a>:
+                                <pre><code>$table = metatable::open('foo', metatable::READWRITE | metatable::STRINGS_GC | metatable::AUTOCLOSE);</code></pre>
+                            </li>
+                        </ul>
+                        <p><strong>Returns</strong>: newly create instance of
+                        <em>metatable</em> or <code>FALSE</code> on failure.</p>
+                        <p><em>metatable</em>s have to be opened with <a
+                            href="#static-open"><code>open()</code></a>. Other way
+                        are not possible.</p>
+                        <p><strong>IMPORTANT</strong>: do not ever open more
+                        instances of same file – dead-lock.</p>
+                    <h3>Instance methods</h3>
+                        <h4 id="method-get"><code>array get(string $row, string
+                                $col)</code></h4>
+                        <ul class="params">
+                            <li>
+                                <code>$row</code>:
+                                row name. Wildcard <code>*</code> can be used.
+                            </li>
+                            <li>
+                                <code>$col</code>:
+                                column name. Wilcard <code>*</code> can be used.
+                            </li>
+                        </ul>
+                        <p><strong>Returns</strong>: <code>array</code> of found
+                        values. Each key is row name and value <code>array</code> of
+                        matched columns.</p>
+                        <p><a href="#method-get"><code>get()</code></a> is probably
+                        the most powerful method that <em>metatable</em> has (because
+                        <em>metatable</em> is mostly-read storage).</p>
+                        <p>If you want to read single value:</p>
+                        <pre><code>$table-&gt;get('foo', 'bar');</code></pre>
+                        <p>For reading one row:</p>
+                        <pre><code>$table-&gt;get('foo', '*');</code></pre>
+                        <p>Rows that has some column:</p>
+                        <pre><code>$rows = array_keys($table-&gt;get('*', 'bar'));</code></pre>
+                        <p>Selected rows has to be read manually (maybe instance for
+                        feature request?).</p>
+                        <p>And whole table:</p>
+                        <pre><code>$table-&gt;('*', '*');</code></pre>
+
+                        <h4 id="method-set"><code>bool set(string $row, string $col,
+                                mixed $value)</code></h4>
+                        <ul class="params">
+                            <li>
+                                <code>$row</code>:
+                                row name.
+                            </li>
+                            <li>
+                                <code>$col</code>:
+                                column name.
+                            </li>
+                            <li>
+                                <code>$value</code>:
+                                value to be set. Currently supported types are:
+                                <code>string</code>, <code>integer</code>,
+                                <code>boolean</code>. Other types may be set in their
+                                serialized form as <code>string</code>.
+                            </li>
+                        </ul>
+                        <p><strong>Returns</strong>: <code>TRUE</code> if everything
+                        went OK, <code>FALSE</code> elsewhere.</p>
+                        <p>Setting <code>NULL</code> means deleting <code>(row,
+                            col)</code> pair.</p>
+
+                        <h4 id="method-index"><code>bool index(string
+                                $start)</code></h4>
+                        <ul class="params">
+                            <li>
+                                <code>$start</code>:
+                                row name or first letters of row name.
+                            </li>
+                        </ul>
+                        <p><strong>Returns</strong>: <code>TRUE</code> if index was
+                        created, <code>FALSE</code> elsewhere.</p>
+                        <p>Indexes are useful only on big table. They do not provide
+                        much speed up with small ones. They even can slow down small
+                        tables on insertion, because all indexes have to be
+                        recomputed on insertion.</p>
+
+                        <h4 id="method-unindex"><code>void unindex(string
+                                $start)</code></h4>
+                        <ul id="params">
+                            <li>
+                                <code>$start</code>:
+                                index name
+                            </li>
+                        </ul>
+                        <p>After calling this method, index with given name does not
+                        exists anymore.</p>
+
+                        <h4 id="method-close"><code>bool close(void)</code></h4>
+                        <p><strong>Returns</strong>: <code>TRUE</code> if
+                        successfully closed, <code>FALSE</code> elsewhere.</p>
+                        <p>If <em>metatable</em> opened in <a
+                            href="#const-readwrite">readwrite mode</a>, data are
+                        saved.</p>
+            </div>
+        </div>
+        <div class="row" id="footer">
+            <div class="column grid-12">
+                Jakub Kulhan &lt;<a href="mailto:jakub.kulhan@gmail.com">jakub.kulhan@gmail.com</a>&gt;
+            </div>
+        </div>
+    </body>
+</html>
