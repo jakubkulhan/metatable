@@ -173,3 +173,14 @@ a:hover {
     text-decoration: none;
     background: #eee;
 }
+#fork {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 149px;
+    height: 149px;
+}
+#fork a, #fork a:hover {
+    display: block;
+    background: transparent;
+}
