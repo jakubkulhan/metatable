@@ -53,6 +53,8 @@ $table-&gt;get('foo', 'bar');
                 <p>Do not ever open more <em>metatable</em>s, when one of them would be opened in <code>READWRITE</code> mode – this will cause race condition, each <em>metatable</em> will wait for the other one to aquire file lock.</p>
                 <h2>Support</h2>
                 <p><em>metatable</em> should definitely work perfectly with PHP 5.2.0 or higher on any UNIX – this cover the most servers you can encounter. Lower versions of PHP 5 are probably without problems, too – please run tests and report if something does not work. With Windows is the problem that they does not give any support for atomic file handling. It is fixed with workaround, so <em>metatable</em> can be used without guaranted atomicity, but it is not as reliable as if running on any UNIX. <em>metatable</em> should be used on Windows only for development purposes.</p>
+                <h2>License</h2>
+                <p><em>metatable</em> is licensed under the MIT License.</p>
             </div>
         </div>
         <div class="row" id="footer">
