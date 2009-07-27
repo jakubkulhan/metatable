@@ -1124,7 +1124,8 @@ final class metatable implements metatableable
                 return FALSE;
             }
 
-            list($handle_filename, $handle) = self::tmp();
+            list($handle_filename, $handle) = array($filename . '~handle', 
+                @fopen($filename . '~handle', 'w+'));
             if (!$handle_filename || !$handle) {
                 fclose($tmp);
                 unlink($tmp_filename);
