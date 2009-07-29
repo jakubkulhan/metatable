@@ -1138,15 +1138,17 @@ final class metatable implements metatableable
             // copy data to temporary
             if ($locking) {
                 foreach ($structure['frames'] as $i => $frame) {
-                    if (($flags & self::STRINGS_GC) === self::STRINGS_GC &&
-                        $frame['name'] === self::FRAME_STRINGS)
+                    if ($frame['name'] === self::FRAME_STRINGS)
                     {
                         $structure['frames'][$i]['used_at_start'] =
                             $structure['frames'][$i]['used'];
                         $structure['frames'][$i]['offset_at_start'] =
                             $structure['frames'][$i]['offset'];
 
-                    } else {
+                    }
+                    if (!(($flags & self::STRINGS_GC) === self::STRINGS_GC &&
+                        $frame['name'] === self::FRAME_STRINGS))
+                    {
                         if (!(fseek($locking, $frame['offset'], SEEK_SET) !== -1 &&
                             fseek($handle, $frame['offset'], SEEK_SET) !== -1 &&
                             stream_copy_to_stream($locking, $handle, $frame['used'])

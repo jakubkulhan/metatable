@@ -2,7 +2,7 @@
 require_once dirname(__FILE__) . '/test-more.php';
 require_once dirname(__FILE__) . '/../metatable.php';
 
-plan(18);
+plan(20);
 
 {
     $table = metatable::open('nonexistent');
@@ -64,6 +64,23 @@ plan(18);
     } else {
         fail('get');
         fail('close');
+    }
+}
+
+{
+    if (($table = metatable::open('table', metatable::READWRITE)) !== FALSE) {
+        is($table->get('*', '*'), 
+            array('x' => array(
+                'int' => 1,
+                'string' => 'abc',
+                'emptystring' => '',
+                'true' => TRUE,
+                'false' => FALSE
+            )), 'get when opened only with READWRITE flag');
+        ok($table->close(), 'close when opened only with READWRITE flag');
+    } else {
+        fail('get when opened only with READWRITE flag');
+        fail('close when opened only with READWRITE flag');
     }
 }
 
