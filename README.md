@@ -100,7 +100,7 @@ Fixed-size records, each record 128 bytes long:
 
 *metatable* is licensed under the MIT License.
 
-Copyright (c) 2009 Jakub Kulhan <jakub.kulhan@gmail.com>
+Copyright (c) 2009-2010 Jakub Kulhan <jakub.kulhan@gmail.com>
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
